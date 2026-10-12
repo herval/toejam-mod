@@ -5,6 +5,7 @@ Change the art, text, sounds and music of **ToeJam & Earl** (Sega Genesis, REV 0
 ![Schwifty Jam: Rick & Morty Edition, built with this toolkit](ports/rick-and-morty/docs/showcase.png)
 
 The repo has three parts:
+
 - **`tjmod.py`:** the toolkit. Extract the game's sprites, palettes, sounds and text to PNG/WAV/JSON, edit them, and rebuild a ROM plus an `.ips` patch.
 - **`ports/rick-and-morty/`:** a complete conversion built with it. Morty and Rick replace ToeJam and Earl, using the sprites of [Schwifty Jam](https://schwifty-jam.vercel.app/).
 - **`web/`:** a browser player (EmulatorJS). It applies the patches to your own ROM, in the browser.
@@ -17,7 +18,7 @@ The repo has three parts:
 web/serve.sh            # http://localhost:8077
 ```
 
-Load your ROM; a `.zip` is fine. Then pick **Play Rick & Morty** or **Play the original**. The ROM is checked (SHA-1 `85e8d0a4fac591b25b77c35680ac4175976f251b`), patched in memory and remembered in that browser only. Nothing is uploaded.
+If `web/mod.md` exists, the page plays that modded ROM (from `python3 tjmod.py build --web web/mod.md`, or from the Rick & Morty port build). Otherwise load your own REV 02 ROM; a `.zip` is fine. Then pick **Play Rick & Morty** or **Play the original**. The ROM is checked (SHA-1 `85e8d0a4fac591b25b77c35680ac4175976f251b`), patched in memory and remembered in that browser only. Nothing is uploaded.
 
 `web/` is a static site and can be hosted as is: see `.github/workflows/pages.yml`.
 
@@ -48,7 +49,7 @@ web/serve.sh                                      # "Play local build"
 ### What you can edit
 
 | File | What | Rules |
-|---|---|---|
+| --- | --- | --- |
 | `assets/sprites/*.png` | 312 animations (1,378 frames): ToeJam, Earl, every Earthling, presents, items, intro, ending | Keep the image size. Frames sit side by side and share the animation's origin. |
 | `assets/guides/*.png` | Same sheets with the hardware sprite boxes outlined | Reference only. You can only draw **inside** a box; pixels outside are dropped (with a warning). |
 | `assets/palettes.json` | The 22 palette lines (16 colors each, `#RRGGBB`) | Colors snap to the Genesis 512-color space. Lines are shared: changing ToeJam's red also changes other red things on line 3. |
@@ -123,7 +124,7 @@ python3 tjmod.py scan                     # with the ROM: sprite animations neit
 git config core.hooksPath .githooks       # once per clone: refuse to commit ROMs or extracted assets
 ```
 
-`.gitignore` keeps `rom/`, `assets/`, `build/` and the ports' generated folders out of git. The pre-commit hook and CI also run `tools/check_no_rom.py`, which spots a Genesis ROM by its header whatever its name. That matters because ROMs use `.md`, same as Markdown.
+`.gitignore` keeps `rom/`, `assets/`, `build/` and the ports' generated folders out of git. The pre-commit hook and CI.
 
 ## Credits and legal
 

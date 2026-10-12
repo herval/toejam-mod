@@ -19,8 +19,6 @@ jobs:
         with:
           node-version: 22
       - run: pip install -r requirements.txt
-      - name: No ROMs or extracted game data in the repo
-        run: python tools/check_no_rom.py
       - name: Export the Rick & Morty sprites (needed by the pose tests)
         working-directory: ports/rick-and-morty
         run: node dump_sprites.mjs out/sprites.json

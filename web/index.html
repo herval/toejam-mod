@@ -122,7 +122,8 @@
   const PATCHES = [
     { label: "Play Rick & Morty", game: "Schwifty Jam (Rick & Morty)", file: "patches/rick-and-morty.ips" },
   ];
-  // When serving locally (serve.sh): the original ROM and your latest tjmod build, if present.
+  // When serving locally (serve.sh): play web/mod.md if a build is there.
+  // Otherwise rom.md (the original) is the base the patches apply to.
   const LOCAL_ROM = "rom.md";
   const LOCAL_BUILD = "mod.md"; // tjmod.py build --web web/mod.md
 
@@ -277,7 +278,14 @@
   ]);
   patches = PATCHES.filter((_, i) => available[i]);
   localBuild = hasLocalBuild;
-  if (remembered) {
+  // A built mod wins over the original and over a ROM remembered in this browser.
+  if (hasLocalBuild) {
+    try {
+      await playLocalBuild();
+    } catch (e) {
+      say(`Couldn't load ${LOCAL_BUILD}: ${e.message}`, true);
+    }
+  } else if (remembered) {
     source = { bytes: new Uint8Array(remembered), from: "remembered" };
     say("Using the ROM you loaded last time.");
   } else if (hasLocalRom) {
@@ -285,7 +293,7 @@
     if (await sha1(bytes) === REV02_SHA1) source = { bytes, from: "local" };
     else say(`${LOCAL_ROM} isn't REV 02; load your ROM to play the mods.`);
   }
-  render();
+  if (!booted) render();
 </script>
 </body>
 </html>
