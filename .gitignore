@@ -14,7 +14,6 @@
 /ports/*/out/
 # Local files for the web player (serve.sh, tjmod build --web)
 /web/rom.md
-/web/mod.md
 *.gen
 *.smd
 *.bin
