@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ToeJam &amp; Earl mod player</title>
+<meta name="description" content="Play ToeJam &amp; Earl mods in the browser. Bring your own ROM; it never leaves your computer.">
+<style>
+  :root {
+    --bg: #120d1f;
+    --panel: #1d1530;
+    --ink: #f4ecff;
+    --muted: #a99bc4;
+    --accent: #ff4fa3;
+    --accent-2: #3ee6c1;
+    --line: #34274f;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+    font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+  a { color: var(--accent-2); }
+
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 14px 20px; border-bottom: 1px solid var(--line); }
+  header h1 { margin: 0; font-size: 18px; letter-spacing: .02em; }
+  header h1 span { color: var(--accent); }
+  header small { color: var(--muted); }
+
+  main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 20px; padding: 20px; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; padding: 16px; } }
+
+  #stage { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: calc(100vh - 150px);
+    background: #000; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 0 auto; }
+  #game { position: absolute; inset: 0; }
+
+  #landing { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; padding: 24px; text-align: center; overflow-y: auto;
+    background: radial-gradient(circle at 50% 35%, #2a1d48 0%, #0b0814 70%); }
+  #landing.hidden { display: none; }
+  /* centered when it fits, scrollable from the top when it doesn't */
+  #landing { justify-content: flex-start; }
+  #landing > :first-child { margin-top: auto; }
+  #landing > :last-child { margin-bottom: auto; }
+  @media (max-width: 600px) { #stage:has(#landing:not(.hidden)) { aspect-ratio: auto; min-height: 440px; } }
+  #landing h2 { margin: 0; font-size: clamp(22px, 4vw, 40px); }
+  #landing p { margin: 0; color: var(--muted); max-width: 440px; }
+  .btn { appearance: none; border: 0; cursor: pointer; border-radius: 999px; padding: 12px 26px; font: inherit; font-weight: 700;
+    background: var(--accent); color: #1a0010; }
+  .btn:hover { filter: brightness(1.1); }
+  .btn.alt { background: var(--accent-2); color: #00261e; }
+  .btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px var(--line); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .row:empty { display: none; }
+  .link { background: none; border: 0; padding: 0; color: var(--accent-2); cursor: pointer; font: inherit; text-decoration: underline; }
+  .link[hidden] { display: none; }
+  #landing.over { outline: 2px dashed var(--accent-2); outline-offset: -12px; }
+  #status { min-height: 1.4em; color: var(--muted); font-size: 13px; max-width: 440px; }
+  #status.error { color: #ff8f8f; }
+
+  aside { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; align-self: start; }
+  aside h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  aside h3 + table { margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  td { padding: 3px 0; vertical-align: top; }
+  td:last-child { text-align: right; }
+  kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line);
+    border-bottom-width: 2px; background: #140f22; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; text-align: center; }
+  aside p { margin: 0; color: var(--muted); font-size: 12px; }
+  code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  footer { padding: 12px 20px 18px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
+  footer p { margin: 0; max-width: 900px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ToeJam <span>&amp;</span> Earl <span>·</span> mod player</h1>
+  <small>Sega Genesis in your browser (Genesis Plus GX → WebAssembly). Bring your own ROM; it never leaves this computer.</small>
+</header>
+
+<main>
+  <div id="stage">
+    <div id="game"></div>
+    <div id="landing">
+      <h2>Funk awaits.</h2>
+      <p id="blurb">Load your ToeJam &amp; Earl ROM (REV 02, a.k.a. "World Rev A"; a .zip is fine) to play it or one of the mods.</p>
+      <div class="row" id="choices"></div>
+      <div><button class="link" id="pick">Load a ROM</button> or drop one here <button class="link" id="forget" hidden>· forget my ROM</button></div>
+      <input type="file" id="file" accept=".md,.gen,.bin,.smd,.zip" hidden>
+      <div id="status"></div>
+    </div>
+  </div>
+
+  <aside>
+    <h3>Player 1 (ToeJam / Morty)</h3>
+    <table>
+      <tr><td>Move</td><td><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd></td></tr>
+      <tr><td>A / B / C</td><td><kbd>Z</kbd><kbd>X</kbd><kbd>C</kbd></td></tr>
+      <tr><td>Start</td><td><kbd>Enter</kbd></td></tr>
+    </table>
+    <h3>Player 2 (Earl / Rick)</h3>
+    <table>
+      <tr><td>Move</td><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></td></tr>
+      <tr><td>A / B / C</td><td><kbd>F</kbd><kbd>G</kbd><kbd>H</kbd></td></tr>
+      <tr><td>Start</td><td><kbd>Space</kbd></td></tr>
+    </table>
+    <p>USB/Bluetooth gamepads work too. Use the emulator's toolbar to save/load state, go fullscreen or remap keys. Saves and your ROM stay in this browser.</p>
+  </aside>
+</main>
+
+<footer>
+  <p>A fan project, not affiliated with or endorsed by Sega, the ToeJam &amp; Earl rights holders or Adult Swim. No game data is hosted here:
+    the mods are patches applied in your browser to a ROM you supply.</p>
+</footer>
+
+<script type="module">
+  import { REV02_SHA1, sha1, unzip, applyIps } from "./rom-tools.js";
+
+  // EmulatorJS pinned to a fixed release; cores are fetched from its CDN on first boot.
+  const EJS_DATA = "https://cdn.emulatorjs.org/4.2.3/data/";
+  // Mods, as IPS patches against REV 02 (written by the ports' build scripts).
+  const PATCHES = [
+    { label: "Play Rick & Morty", game: "Schwifty Jam (Rick & Morty)", file: "patches/rick-and-morty.ips" },
+  ];
+  // When serving locally (serve.sh): the original ROM and your latest tjmod build, if present.
+  const LOCAL_ROM = "rom.md";
+  const LOCAL_BUILD = "mod.md"; // tjmod.py build --web web/mod.md
+
+  // RetroPad slots as EmulatorJS numbers them for the Genesis core:
+  // 0 = B, 1 = A, 2 = Mode, 3 = Start, 4-7 = up/down/left/right, 8 = C.
+  const pad = (keys) => Object.fromEntries(Object.entries(keys).map(([slot, [key, gp]]) => [slot, { value: key, value2: gp }]));
+  const CONTROLS = {
+    0: pad({
+      0: ["x", "BUTTON_2"], 1: ["z", "BUTTON_4"], 8: ["c", "BUTTON_1"], 2: ["", "SELECT"], 3: ["enter", "START"],
+      4: ["up arrow", "DPAD_UP"], 5: ["down arrow", "DPAD_DOWN"], 6: ["left arrow", "DPAD_LEFT"], 7: ["right arrow", "DPAD_RIGHT"],
+    }),
+    1: pad({
+      0: ["g", "BUTTON_2"], 1: ["f", "BUTTON_4"], 8: ["h", "BUTTON_1"], 2: ["", "SELECT"], 3: ["space", "START"],
+      4: ["w", "DPAD_UP"], 5: ["s", "DPAD_DOWN"], 6: ["a", "DPAD_LEFT"], 7: ["d", "DPAD_RIGHT"],
+    }),
+    2: {}, 3: {},
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const landing = $("landing"), status = $("status"), choices = $("choices");
+  let booted = false;
+  let source = null; // the verified REV 02 ROM: { bytes, from: "picked" | "remembered" | "local" }
+  let patches = [];  // PATCHES entries that are actually served
+  let localBuild = false;
+
+  function say(text, error = false) {
+    status.textContent = text;
+    status.classList.toggle("error", error);
+  }
+
+  function boot(bytes, name) {
+    if (booted) { location.reload(); return; }
+    booted = true;
+    say("Loading emulator core…");
+    Object.assign(window, {
+      EJS_player: "#game",
+      EJS_core: "segaMD",
+      EJS_gameUrl: new File([bytes], name.replace(/[^\w&() -]+/g, "") + ".md"),
+      EJS_gameName: name, // also keys the save states, so each mod keeps its own
+      EJS_pathtodata: EJS_DATA,
+      EJS_startOnLoaded: true,
+      EJS_color: "#ff4fa3",
+      EJS_backgroundColor: "#000000",
+      EJS_defaultControls: CONTROLS,
+      EJS_onGameStart: () => landing.classList.add("hidden"),
+    });
+    const s = document.createElement("script");
+    s.src = EJS_DATA + "loader.js";
+    s.onerror = () => { say("Couldn't reach the EmulatorJS CDN. Check your connection.", true); booted = false; };
+    document.body.appendChild(s);
+    // The emulator draws its own loading UI; get our overlay out of the way.
+    setTimeout(() => landing.classList.add("hidden"), 300);
+  }
+
+  function button(label, cls, onclick) {
+    const b = document.createElement("button");
+    b.className = "btn " + cls;
+    b.textContent = label;
+    b.onclick = onclick;
+    choices.append(b);
+  }
+
+  function render() {
+    choices.replaceChildren();
+    if (source) {
+      for (const p of patches) button(p.label, "", () => playPatch(p));
+      button("Play the original", "alt", () => boot(source.bytes, "ToeJam & Earl"));
+    }
+    if (localBuild) button("Play local build", "ghost", playLocalBuild);
+    $("forget").hidden = source?.from !== "remembered" && source?.from !== "picked";
+    $("pick").textContent = source ? "Load a different ROM" : "Load your ROM";
+    $("blurb").textContent = source
+      ? "Two funky aliens (or a scientist and his grandson), one crashed ship, 25 levels of Earth."
+      : "Load your ToeJam & Earl ROM (REV 02, a.k.a. \"World Rev A\"; a .zip is fine) to play it or one of the mods.";
+  }
+
+  async function playPatch(p) {
+    try {
+      say(`Applying ${p.file}…`);
+      const ips = new Uint8Array(await (await fetch(p.file, { cache: "no-cache" })).arrayBuffer());
+      boot(applyIps(source.bytes, ips), p.game);
+    } catch (e) {
+      say(`Couldn't apply ${p.file}: ${e.message}`, true);
+    }
+  }
+
+  async function playLocalBuild() {
+    // Uncached, so a fresh build is always picked up.
+    const bytes = new Uint8Array(await (await fetch(LOCAL_BUILD, { cache: "no-store" })).arrayBuffer());
+    boot(bytes, "ToeJam & Earl (local build)");
+  }
+
+  // ---- remembering the ROM (IndexedDB, this browser only)
+  const DB = "toejam-mod-player";
+  function store(mode, fn) {
+    return new Promise((resolve, reject) => {
+      const open = indexedDB.open(DB, 1);
+      open.onupgradeneeded = () => open.result.createObjectStore("rom");
+      open.onerror = () => reject(open.error);
+      open.onsuccess = () => {
+        const tx = open.result.transaction("rom", mode);
+        const req = fn(tx.objectStore("rom"));
+        tx.oncomplete = () => { open.result.close(); resolve(req.result); };
+        tx.onerror = () => reject(tx.error);
+      };
+    });
+  }
+  const remember = (bytes) => store("readwrite", (s) => s.put(bytes, "rev02")).catch(() => {});
+  const recall = () => store("readonly", (s) => s.get("rev02")).catch(() => null);
+  const forget = () => store("readwrite", (s) => s.delete("rev02")).catch(() => {});
+
+  // ---- loading a ROM the user picked or dropped
+  async function load(file) {
+    if (!file || booted) return;
+    try {
+      say(`Reading ${file.name}…`);
+      const bytes = await unzip(new Uint8Array(await file.arrayBuffer()));
+      if (await sha1(bytes) === REV02_SHA1) {
+        source = { bytes, from: "picked" };
+        await remember(bytes);
+        say("ToeJam & Earl REV 02. Pick what to play.");
+        render();
+        return;
+      }
+      // Some other ROM: play it as it is, the patches only fit REV 02.
+      choices.replaceChildren();
+      button(`Play ${file.name}`, "alt", () => boot(bytes, file.name.replace(/\.[^.]+$/, "")));
+      say("That isn't ToeJam & Earl REV 02 (\"World Rev A\"), so the mods can't be applied. You can still play it as it is.");
+    } catch (e) {
+      say(e.message, true);
+    }
+  }
+
+  $("pick").onclick = () => $("file").click();
+  $("file").onchange = (e) => load(e.target.files[0]);
+  $("forget").onclick = async () => {
+    await forget();
+    source = null;
+    say("Forgotten. Load your ROM again to play.");
+    render();
+  };
+
+  const drop = $("stage");
+  ["dragenter", "dragover"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); landing.classList.add("over"); }));
+  ["dragleave", "drop"].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); landing.classList.remove("over"); }));
+  drop.addEventListener("drop", (e) => load(e.dataTransfer.files[0]));
+
+  // ---- startup: which patches are served, a remembered ROM, or the local files from serve.sh
+  const served = (url) => fetch(url, { method: "HEAD", cache: "no-store" }).then((r) => r.ok, () => false);
+  const [available, remembered, hasLocalRom, hasLocalBuild] = await Promise.all([
+    Promise.all(PATCHES.map((p) => served(p.file))), recall(), served(LOCAL_ROM), served(LOCAL_BUILD),
+  ]);
+  patches = PATCHES.filter((_, i) => available[i]);
+  localBuild = hasLocalBuild;
+  if (remembered) {
+    source = { bytes: new Uint8Array(remembered), from: "remembered" };
+    say("Using the ROM you loaded last time.");
+  } else if (hasLocalRom) {
+    const bytes = new Uint8Array(await (await fetch(LOCAL_ROM)).arrayBuffer());
+    if (await sha1(bytes) === REV02_SHA1) source = { bytes, from: "local" };
+    else say(`${LOCAL_ROM} isn't REV 02; load your ROM to play the mods.`);
+  }
+  render();
+</script>
+</body>
+</html>

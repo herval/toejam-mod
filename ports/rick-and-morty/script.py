@@ -1,0 +1,107 @@
+"""Rick & Morty text for the port: original string -> replacement.
+
+Every occurrence of an original string is replaced. Present names keep the original
+13-character dotted layout of the present list. Avoid characters the game font lacks
+(no '*'). Lines the code reaches PC-relatively (the intro story) can't move, so they
+must be no longer than the original; build_port.py checks.
+"""
+
+RANKS_HUD = ["jerry", "noob", "summer", "morty", "beth", "tiny", "pickle", "unity", "rick", "goner"]
+RANKS_PLAIN = ["jerry", "noobnoob", "summer", "morty", "beth", "tinyrick", "picklerick", "unity", "rick"]
+
+PRESENTS = {
+    "icarus wings ": "space cruiser",
+    "spring shoes ": "spring shoes ",
+    "innertube ...": "innertube ...",
+    "tomatoes ....": "mega seeds ..",
+    "sling shot ..": "seed shooter ",
+    "rocket skates": "rocket skates",
+    "rose bushes .": "force field .",
+    "super hitops ": "turbo sneaks ",
+    "doorway .....": "portal fluid ",
+    "rootbeer ....": "squanch soda ",
+    "promotion ...": "plumbus .....",
+    "togetherness ": "portal gun ..",
+    "fudge sundae ": "szechuan ....",
+    "decoy .......": "meeseeks box ",
+    "total bummer!": "evil morty!!!",
+    "extra life ..": "clone rick ..",
+    "randomizer ..": "kalaxian ....",
+    "telephone ...": "butter robot ",
+    "extra buck ..": "schmeckle ...",
+    "jackpot .....": "schmeckle bag",
+    "tomato rain .": "seed rain ...",
+    "earthling ...": "cronenberg ..",
+    "school book .": "jerry's book ",
+    "boombox .....": "get schwifty ",
+}
+
+LINES = {
+    # names
+    "toejam": "morty",
+    "earl": "rick",
+    "Bye Toejam": "Bye Morty",
+    "Bye Earl": "Bye Rick",
+    "yo earl": "yo rick",
+    "c'mon earl": "c'mon rick",
+    "Earl, you're": "Rick, you're",
+    "belt earl!": "belt rick!",
+    "earl.": "rick.",
+    "Earl, we are": "Rick, we are",
+    "Earl!!!": "Rick!!!",
+    "rosebushes!": "forcefield!",
+    "trixie is": "unity is",
+    "trixie's": "unity's",
+    "Funkotron,": "C-137,",
+    "cereal": "eyeholes",
+    "rootbeer": "squanch soda",
+    # menus
+    "Two Player -- Toejam an' Earl": "Two Player -- Rick an' Morty",
+    "One Player -- jus' Toejam": "One Player -- jus' Morty",
+    "One Player -- jus' Earl": "One Player -- jus' Rick",
+    "song 1 - toejam jammin": "song 1 - get schwifty",
+    "song 2 - big earl bump": "song 2 - big rick bump",
+    "song 3 - rapmaster rocket racket": "song 3 - space cruiser racket",
+    "song 4 - funkotronic beat": "song 4 - citadel beat",
+    "song 6 - toejam slowjam": "song 6 - morty slowjam",
+    # the rocketship is now Rick's space cruiser
+    "rocketship windshield": "cruiser windshield",
+    "left megawatt speaker": "left thruster nacelle",
+    "super funkomatic amplamator": "dark matter fuel injector",
+    "amplamator connector fin": "microverse battery",
+    "forward stabilizing unit": "forward plumbus unit",
+    "awesome snowboard": "portal gun charger",
+    "righteous rapmaster capsule": "concentrated dark matter",
+    "right megawatt speaker": "right thruster nacelle",
+    "hyperfunk thruster": "hyperspace thruster",
+    "Rocketship piece on this level": "Cruiser piece on this level",
+    "Rocketship piece on toejam's level": "Cruiser piece on morty's level",
+    "Rocketship piece on earl's level": "Cruiser piece on rick's level",
+    "no pieces on toejam's level": "no pieces on morty's level",
+    "no pieces on earl's level": "no pieces on rick's level",
+    " missing rocketship pieces": " missing cruiser pieces",
+    # intro story
+    "My name is Toejam.": "My name is Morty.",
+    "And this here is my Bro": "And this here is my",
+    "Big Rappin Earl.": "Grandpa Rick.",
+    "Yo, Wha'sup.": "Burrp. Sup.",
+    "Earl and myself are": "Rick and myself are",
+    "highly funky aliens": "two schwifty dudes",
+    "the Planet Funkotron.": "dimension C-137.",
+    "FUNKOTRON!": "WUBBALUBBA",
+    "Thank-you Earl.": "Thanks, Rick.",
+    "This is our highly funky,": "This is our schwifty,",
+    "Righteous Rapmaster Rocketship.": "Interdimensional Space Cruiser.",
+    "With which Earl and I": "With which Rick and I",
+    "some extremely funky tunes.": "some super schwifty tunes.",
+    "Crank it Earl!": "Crank it Rick!",
+    "We were cruisin in our Rocket,": "Cruisin thru the galaxy,",
+    "Thumpin out a funky beat,": "Thumpin a schwifty beat,",
+    "When big Earl said": "When Rick said",
+    "you should never let earl drive": "you should never let rick drive",
+    "thanks to earl . . .": "thanks to rick . . .",
+    "of our Rocketship,": "of our Cruiser,",
+    "Jet Outta here.": "Portal home.",
+    "crank it earl!": "get schwifty!",
+    " crank it!": " schwifty!",
+}

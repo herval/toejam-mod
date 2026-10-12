@@ -1,0 +1,3 @@
+[submodule "tje-disasm"]
+	path = tje-disasm
+	url = https://github.com/bstreiff/tje-disasm.git

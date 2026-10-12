@@ -1,0 +1,30 @@
+# Game data never goes in this repo: ROMs, and anything extracted from or built out of
+# one. Only code, original art and the .ips patches are published. Note that Genesis
+# ROMs use the .md extension, same as Markdown, so they're ignored by location.
+
+# Your ROM
+/rom/
+# Extracted assets (the game's own art, sounds and text)
+/assets/
+/examples/demo-assets/
+/ports/*/assets/
+# Built ROMs and patches (the port's patch is published as web/patches/*.ips)
+/build/
+/ports/*/build/
+/ports/*/out/
+# Local files for the web player (serve.sh, tjmod build --web)
+/web/rom.md
+/web/mod.md
+*.gen
+*.smd
+*.bin
+*.zip
+
+# Scratch captures from playtesting
+/ports/*/screenshot-*.png
+/ports/*/*.mp3
+
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/
